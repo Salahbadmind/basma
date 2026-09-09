@@ -1,0 +1,8 @@
+{
+  "name": "Cabinet Dentaire El Bahdja - Clinique Dentaire Alger",
+  "description": "Multilingual dental clinic web application and management system featuring online booking, treatments catalog in DZD, before/after showcases, doctor schedules, and comprehensive admin dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
