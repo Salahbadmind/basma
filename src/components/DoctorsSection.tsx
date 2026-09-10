@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 export const DoctorsSection: React.FC = () => {
-  const { doctors, language, t, openBooking } = useClinic();
+  const { doctors, language, t, openBooking, navigateToDoctor } = useClinic();
 
   const getDayName = (dayIndex: number) => {
     const daysFr = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
@@ -55,11 +55,14 @@ export const DoctorsSection: React.FC = () => {
                 
                 {/* Doctor Top Profile Header */}
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-                  <div className="relative shrink-0">
+                  <div 
+                    onClick={() => navigateToDoctor(doctor.id)}
+                    className="relative shrink-0 cursor-pointer group/img"
+                  >
                     <img
                       src={doctor.imageUrl}
                       alt={doctor.name[language]}
-                      className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl object-cover object-center shadow-md border-2 border-white ring-2 ring-teal-500/20"
+                      className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl object-cover object-center shadow-md border-2 border-white ring-2 ring-teal-500/20 group-hover/img:scale-103 transition-transform"
                     />
                     <span className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-md bg-amber-400 text-slate-950 font-bold text-[11px] flex items-center gap-1 shadow-xs">
                       <Star className="w-3 h-3 fill-slate-950" />
@@ -73,7 +76,10 @@ export const DoctorsSection: React.FC = () => {
                       <span>{doctor.experienceYears}+ {language === 'ar' ? 'سنوات خبرة' : t.doctorsSection.experience}</span>
                     </div>
 
-                    <h3 className="text-xl font-bold text-slate-900 leading-tight">
+                    <h3 
+                      onClick={() => navigateToDoctor(doctor.id)}
+                      className="text-xl font-bold text-slate-900 leading-tight hover:text-teal-600 transition-colors cursor-pointer"
+                    >
                       {doctor.name[language]}
                     </h3>
                     <p className="text-xs font-semibold text-teal-800">
@@ -130,16 +136,24 @@ export const DoctorsSection: React.FC = () => {
 
               </div>
 
-              {/* Action Button: Book with this doctor */}
-              <div className="pt-6 mt-6 border-t border-slate-200/80">
+              {/* Action Buttons: Book with this doctor & View Profile */}
+              <div className="pt-6 mt-6 border-t border-slate-200/80 flex flex-col sm:flex-row gap-2">
                 <button
                   id={`btn-book-doc-${doctor.id}`}
                   onClick={() => openBooking(undefined, doctor)}
-                  className="w-full py-3 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm shadow-teal-600/20 active:scale-98 transition-all cursor-pointer"
+                  className="flex-1 py-3 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm shadow-teal-600/20 active:scale-98 transition-all cursor-pointer"
                 >
                   <Calendar className="w-4 h-4" />
                   <span>{t.common.bookWithDoctor} {doctor.name[language].split(' ')[1]}</span>
-                  <ChevronRight className="w-4 h-4" />
+                </button>
+
+                <button
+                  id={`btn-profile-doc-${doctor.id}`}
+                  onClick={() => navigateToDoctor(doctor.id)}
+                  className="py-3 px-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <span>{language === 'ar' ? 'الملف الطبي' : 'Profil'}</span>
+                  <ChevronRight className="w-4 h-4 rtl:rotate-180" />
                 </button>
               </div>
 
