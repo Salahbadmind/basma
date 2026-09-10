@@ -26,6 +26,7 @@ export const ProductDetail: React.FC = () => {
     t, 
     openCheckout, 
     navigateToView,
+    navigateToProduct,
     openBooking
   } = useClinic();
 
@@ -34,6 +35,8 @@ export const ProductDetail: React.FC = () => {
 
   // Find product by slug or default to first
   const product = products.find(p => p.slug === selectedProductSlug) || products[0];
+
+  const otherProducts = products.filter(p => p.id !== product?.id).slice(0, 3);
 
   if (!product) {
     return (
@@ -293,6 +296,51 @@ export const ProductDetail: React.FC = () => {
           </div>
 
         </div>
+
+        {/* Discover Other Products */}
+        {otherProducts.length > 0 && (
+          <div className="pt-8 border-t border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                {language === 'ar' ? 'منتجات أخرى في الصيدلية والعيادة' : 'Découvrez aussi nos autres produits'}
+              </h3>
+              <button
+                onClick={() => navigateToView('products')}
+                className="text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 cursor-pointer"
+              >
+                <span>{language === 'ar' ? 'عرض المتجر بالكامل' : 'Voir toute la boutique'}</span>
+                <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {otherProducts.map(other => (
+                <div
+                  key={other.id}
+                  onClick={() => navigateToProduct(other.slug)}
+                  className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 transition-all cursor-pointer space-y-2 group"
+                >
+                  <div className="aspect-16/10 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-700">
+                    <img
+                      src={other.images[0]}
+                      alt={other.name[language]}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-teal-600 transition-colors line-clamp-1">
+                    {other.name[language]}
+                  </h4>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500">{other.category}</span>
+                    <span className="font-black text-teal-700 dark:text-teal-400">
+                      {other.priceDZD.toLocaleString()} {t.common.dzd}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
