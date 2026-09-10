@@ -1,7 +1,16 @@
 export type Language = 'fr' | 'ar' | 'en';
 export type Theme = 'light' | 'dark';
 
-export type AppView = 'home' | 'products' | 'product-detail' | 'services' | 'doctors' | 'admin' | 'order-success';
+export type AppView = 
+  | 'home' 
+  | 'products' 
+  | 'product-detail' 
+  | 'services' 
+  | 'service-detail'
+  | 'doctors' 
+  | 'doctor-detail'
+  | 'admin' 
+  | 'order-success';
 
 export type ProductCategory = 
   | 'all'
