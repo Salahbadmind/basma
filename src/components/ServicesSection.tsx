@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const ServicesSection: React.FC = () => {
-  const { services, language, t, openBooking, openServiceDetail } = useClinic();
+  const { services, language, t, openBooking, navigateToService } = useClinic();
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -124,7 +124,10 @@ export const ServicesSection: React.FC = () => {
               id={`service-card-${service.slug}`}
               className="group bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-teal-300/80 transition-all duration-300 flex flex-col justify-between"
             >
-              <div>
+              <div 
+                onClick={() => navigateToService(service.slug || service.id)}
+                className="cursor-pointer"
+              >
                 {/* Service Image Header with Badges */}
                 <div className="relative h-28 sm:h-48 overflow-hidden bg-slate-100">
                   <img
@@ -195,7 +198,7 @@ export const ServicesSection: React.FC = () => {
                 {/* Details Button */}
                 <button
                   id={`btn-details-${service.slug}`}
-                  onClick={() => openServiceDetail(service)}
+                  onClick={() => navigateToService(service.slug || service.id)}
                   className="w-full sm:w-auto py-1 sm:py-2.5 px-2 rounded-lg sm:rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 text-[10px] sm:text-xs font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer"
                 >
                   <Info className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-500 shrink-0" />
