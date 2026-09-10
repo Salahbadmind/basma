@@ -23,6 +23,8 @@ import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminLogin } from './components/AdminLogin';
 import { ProductsCatalog } from './components/ProductsCatalog';
 import { ProductDetail } from './components/ProductDetail';
+import { ServiceDetail } from './components/ServiceDetail';
+import { DoctorDetail } from './components/DoctorDetail';
 import { CheckoutModal } from './components/CheckoutModal';
 import { MobileBottomBar } from './components/MobileBottomBar';
 
@@ -46,6 +48,12 @@ const MainClinicApp: React.FC = () => {
         {currentView === 'product-detail' ? (
           /* Single Dedicated Product Page for FB Ads */
           <ProductDetail />
+        ) : currentView === 'service-detail' ? (
+          /* Single Dedicated Treatment Page */
+          <ServiceDetail />
+        ) : currentView === 'doctor-detail' ? (
+          /* Single Dedicated Doctor Profile Page */
+          <DoctorDetail />
         ) : currentView === 'products' ? (
           /* Full Store Products Catalog */
           <ProductsCatalog />
