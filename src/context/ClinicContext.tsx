@@ -65,11 +65,15 @@ interface ClinicContextType {
   setTheme: (t: Theme) => void;
   toggleTheme: () => void;
 
-  // Navigation & Deep Linking (FB Ads friendly)
+  // Navigation & Deep Linking (FB Ads & Share friendly)
   currentView: AppView;
   setCurrentView: (view: AppView) => void;
   selectedProductSlug: string | null;
+  selectedServiceId: string | null;
+  selectedDoctorId: string | null;
   navigateToProduct: (slug: string) => void;
+  navigateToService: (serviceIdOrSlug: string) => void;
+  navigateToDoctor: (doctorId: string) => void;
   navigateToView: (view: AppView) => void;
 
   // Clinic Core Data
@@ -210,9 +214,11 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const dir = language === 'ar' ? 'rtl' : 'ltr';
   const t = translations[language] || translations['fr'];
 
-  // View Navigation & URL Hash / Query Parameter sync for FB Ads
+  // View Navigation & URL Hash / Query Parameter sync for FB Ads and deep linking
   const [currentView, setCurrentViewState] = useState<AppView>('home');
   const [selectedProductSlug, setSelectedProductSlug] = useState<string | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
 
   // Initialize View from URL hash or query params
   useEffect(() => {
@@ -220,10 +226,24 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const hash = window.location.hash.replace('#', '');
       const searchParams = new URLSearchParams(window.location.search);
       const productParam = searchParams.get('product') || (hash.startsWith('product-') ? hash.replace('product-', '') : null);
+      const serviceParam = searchParams.get('service') || (hash.startsWith('service-') ? hash.replace('service-', '') : hash.startsWith('treatment-') ? hash.replace('treatment-', '') : null);
+      const doctorParam = searchParams.get('doctor') || (hash.startsWith('doctor-') ? hash.replace('doctor-', '') : null);
 
       if (productParam) {
         setSelectedProductSlug(productParam);
         setCurrentViewState('product-detail');
+        return;
+      }
+
+      if (serviceParam) {
+        setSelectedServiceId(serviceParam);
+        setCurrentViewState('service-detail');
+        return;
+      }
+
+      if (doctorParam) {
+        setSelectedDoctorId(doctorParam);
+        setCurrentViewState('doctor-detail');
         return;
       }
 
@@ -248,7 +268,7 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (view === 'home') {
       window.history.pushState(null, '', window.location.pathname);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (view !== 'product-detail') {
+    } else if (view !== 'product-detail' && view !== 'service-detail' && view !== 'doctor-detail') {
       window.history.pushState(null, '', `#${view}`);
       setTimeout(() => {
         const elementId = view === 'products' ? 'products-section' : view;
@@ -266,6 +286,20 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setSelectedProductSlug(slug);
     setCurrentViewState('product-detail');
     window.history.pushState(null, '', `?product=${slug}#product-${slug}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateToService = (serviceIdOrSlug: string) => {
+    setSelectedServiceId(serviceIdOrSlug);
+    setCurrentViewState('service-detail');
+    window.history.pushState(null, '', `?service=${serviceIdOrSlug}#service-${serviceIdOrSlug}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateToDoctor = (doctorId: string) => {
+    setSelectedDoctorId(doctorId);
+    setCurrentViewState('doctor-detail');
+    window.history.pushState(null, '', `?doctor=${doctorId}#doctor-${doctorId}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -949,7 +983,11 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         currentView,
         setCurrentView,
         selectedProductSlug,
+        selectedServiceId,
+        selectedDoctorId,
         navigateToProduct,
+        navigateToService,
+        navigateToDoctor,
         navigateToView,
         services,
         doctors,
