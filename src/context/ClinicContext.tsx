@@ -27,6 +27,7 @@ import {
 import { initialProducts, initialOrders } from '../data/productsData';
 import { translations } from '../i18n/translations';
 import { safeStorage } from '../utils/safeStorage';
+import { arePhoneNumbersEqual } from '../utils/phoneUtils';
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabase';
 import {
   fetchAppointmentsFromSupabase,
@@ -736,6 +737,19 @@ export const ClinicProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     notificationPreference: 'whatsapp' | 'sms' | 'email';
     priceEstimatedDZD?: number;
   }): Appointment => {
+    // Check if an active appointment already exists for this phone number on this day
+    const alreadyBookedToday = appointments.find(
+      (apt) =>
+        apt.status !== 'cancelled' &&
+        apt.date === data.date &&
+        arePhoneNumbersEqual(apt.patientPhone, data.patientPhone)
+    );
+
+    if (alreadyBookedToday) {
+      console.warn('Booking rejected: A reservation already exists on this day for phone:', data.patientPhone);
+      return alreadyBookedToday;
+    }
+
     const newApt: Appointment = {
       id: `apt-${Date.now().toString().slice(-5)}`,
       ...data,
