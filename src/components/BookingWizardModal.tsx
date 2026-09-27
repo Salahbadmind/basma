@@ -3,6 +3,7 @@ import { useClinic } from '../context/ClinicContext';
 import { TreatmentService, Doctor, Appointment } from '../types';
 import confetti from 'canvas-confetti';
 import { printAppointmentVoucher } from '../utils/printVoucher';
+import { arePhoneNumbersEqual } from '../utils/phoneUtils';
 import { 
   X, 
   CheckCircle2, 
@@ -95,6 +96,25 @@ export const BookingWizardModal: React.FC = () => {
     return doctors.find((d) => d.id === selectedDoctorId) || null;
   }, [doctors, selectedDoctorId]);
 
+  // Check if an active appointment already exists on selectedDate with the entered phone number
+  const sameDayAppointment = useMemo(() => {
+    if (!patientPhone.trim() || !selectedDate) return null;
+    return appointments.find((apt) => {
+      if (apt.status === 'cancelled') return false;
+      if (apt.date !== selectedDate) return false;
+      return arePhoneNumbersEqual(apt.patientPhone, patientPhone);
+    });
+  }, [appointments, selectedDate, patientPhone]);
+
+  // Check all active appointments for this phone number across all dates
+  const activeBookingsForPhone = useMemo(() => {
+    if (!patientPhone.trim()) return [];
+    return appointments.filter((apt) => {
+      if (apt.status === 'cancelled') return false;
+      return arePhoneNumbersEqual(apt.patientPhone, patientPhone);
+    });
+  }, [appointments, patientPhone]);
+
   // Available Time Slots for selected date
   const morningSlots = ['08:30', '09:15', '10:00', '10:45', '11:30', '12:15'];
   const afternoonSlots = ['13:30', '14:15', '15:00', '15:45', '16:30', '17:15'];
@@ -164,22 +184,37 @@ export const BookingWizardModal: React.FC = () => {
         return;
       }
 
-      // Anti-Spam & Abuse Protection: Check if this phone number already has multiple active reservations
-      const cleanInputPhone = patientPhone.replace(/\D/g, '');
-      const existingActiveBookings = appointments.filter((apt) => {
-        const aptPhoneClean = apt.patientPhone.replace(/\D/g, '');
-        return (
-          aptPhoneClean.length >= 8 &&
-          aptPhoneClean.slice(-8) === cleanInputPhone.slice(-8) &&
-          (apt.status === 'pending' || apt.status === 'confirmed')
+      // 1. Strict Same-Day Restriction: One appointment per day per patient phone number
+      const existingSameDay = appointments.find((apt) => {
+        if (apt.status === 'cancelled') return false;
+        if (apt.date !== selectedDate) return false;
+        return arePhoneNumbersEqual(apt.patientPhone, patientPhone);
+      });
+
+      if (existingSameDay) {
+        setErrorMsg(
+          language === 'ar'
+            ? `⚠️ لا يمكنك حجز أكثر من موعد واحد في نفس اليوم! لديك بالفعل موعد مسجل بتاريخ ${selectedDate} (الساعة ${existingSameDay.timeSlot}) بهذا الرقم (${patientPhone}). لتعديل التوقيت أو للاستفسار، يرجى التواصل مباشرة مع العيادة.`
+            : language === 'en'
+            ? `⚠️ You cannot take more than one appointment in one day! You already have an appointment booked on ${selectedDate} (at ${existingSameDay.timeSlot}) with this phone number (${patientPhone}). To reschedule or for emergencies, please contact the clinic.`
+            : `⚠️ Vous ne pouvez pas prendre plus d'un rendez-vous le même jour ! Vous avez déjà un rendez-vous réservé le ${selectedDate} (à ${existingSameDay.timeSlot}) avec ce numéro (${patientPhone}). Pour modifier votre horaire ou en cas d'urgence, veuillez contacter le cabinet.`
         );
+        return;
+      }
+
+      // 2. Anti-Abuse Protection: Check if this phone number already has too many active reservations
+      const existingActiveBookings = appointments.filter((apt) => {
+        if (apt.status === 'cancelled') return false;
+        return arePhoneNumbersEqual(apt.patientPhone, patientPhone);
       });
 
       if (existingActiveBookings.length >= 2) {
         setErrorMsg(
           language === 'ar'
-            ? '⚠️ تنبيه: لديك بالفعل حجزين نشطين في النظام بهذا الرقم. لمنع إساءة الاستخدام أو لتعديل المواعيد، يرجى التواصل هاتفياً مباشرة مع العيادة.'
-            : '⚠️ Attention : Vous avez déjà 2 réservations actives avec ce numéro de téléphone. Pour éviter les abus ou pour modifier vos rendez-vous, veuillez contacter directement le cabinet.'
+            ? `⚠️ تنبيه: لديك بالفعل ${existingActiveBookings.length} مواعيد نشطة في النظام بهذا الرقم (${patientPhone}). لا يمكن حجز مواعيد إضافية قبل إتمام أو إلغاء المواعيد الحالية.`
+            : language === 'en'
+            ? `⚠️ Notice: You already have ${existingActiveBookings.length} active appointments in the system with this phone number (${patientPhone}). Please attend or cancel current appointments before booking new ones.`
+            : `⚠️ Attention : Vous avez déjà ${existingActiveBookings.length} réservations actives enregistrées avec ce numéro (${patientPhone}). Pour éviter les abus ou modifier vos rendez-vous, veuillez contacter directement le cabinet.`
         );
         return;
       }
@@ -469,9 +504,29 @@ export const BookingWizardModal: React.FC = () => {
                   id="booking-date-input"
                   value={selectedDate}
                   min={new Date().toISOString().slice(0, 10)}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    if (errorMsg) setErrorMsg('');
+                  }}
                   className="w-full p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs focus:ring-2 focus:ring-teal-500 text-sm font-semibold text-slate-900"
                 />
+
+                {/* Warning if current phone already has booking on this date */}
+                {sameDayAppointment && (
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-center justify-between gap-2 animate-in fade-in">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span className="font-medium">
+                        {language === 'ar'
+                          ? `لديك موعد مسجل بالفعل في تاريخ ${selectedDate} (الساعة ${sameDayAppointment.timeSlot}) بهذا الرقم.`
+                          : `Vous avez déjà un rendez-vous réservé le ${selectedDate} (à ${sameDayAppointment.timeSlot}) avec votre numéro.`}
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded shrink-0">
+                      {language === 'ar' ? 'اختر تاريخاً آخر' : 'Changer de date'}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Real-time Color Legend (Green vs Red) */}
@@ -654,12 +709,78 @@ export const BookingWizardModal: React.FC = () => {
                       type="tel"
                       id="patient-phone-input"
                       value={patientPhone}
-                      onChange={(e) => setPatientPhone(e.target.value)}
+                      onChange={(e) => {
+                        setPatientPhone(e.target.value);
+                        if (errorMsg) setErrorMsg('');
+                      }}
                       placeholder={t.booking.form.phonePlaceholder}
-                      className="w-full pl-16 pr-3 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-teal-500"
+                      className={`w-full pl-16 pr-3 py-3 rounded-xl border bg-white text-sm focus:ring-2 focus:ring-teal-500 transition-colors ${
+                        sameDayAppointment
+                          ? 'border-amber-400 ring-2 ring-amber-400/30 bg-amber-50/20'
+                          : activeBookingsForPhone.length >= 2
+                          ? 'border-rose-400 ring-2 ring-rose-400/30 bg-rose-50/20'
+                          : 'border-slate-200'
+                      }`}
                       required
                     />
                   </div>
+
+                  {/* Immediate Same-Day Limit Alert Banner */}
+                  {sameDayAppointment && (
+                    <div className="mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-start gap-2.5 animate-in fade-in">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="flex-1 space-y-1">
+                        <p className="font-bold text-amber-950">
+                          {language === 'ar'
+                            ? `⚠️ تنبيه: لديك بالفعل موعد مسجل في هذا اليوم (${selectedDate} في الساعة ${sameDayAppointment.timeSlot})!`
+                            : language === 'en'
+                            ? `⚠️ Notice: You already have an appointment booked on this date (${selectedDate} at ${sameDayAppointment.timeSlot})!`
+                            : `⚠️ Attention : Vous avez déjà un rendez-vous réservé ce jour (${selectedDate} à ${sameDayAppointment.timeSlot}) !`}
+                        </p>
+                        <p className="text-[11px] text-amber-800 leading-relaxed">
+                          {language === 'ar'
+                            ? 'لا يسمح النظام بحجز أكثر من موعد واحد في نفس اليوم لنفس رقم الهاتف. لتعديل التوقيت أو للاستفسار، يرجى التواصل مع العيادة.'
+                            : language === 'en'
+                            ? 'The clinic policy does not permit taking more than one appointment on the same day with the same phone number.'
+                            : "Le règlement du cabinet n'autorise pas plus d'un rendez-vous par jour pour un même numéro de téléphone."}
+                        </p>
+                        <div className="pt-1">
+                          <a
+                            href={`https://wa.me/${clinicInfo.whatsapp.replace('+', '')}?text=${encodeURIComponent(
+                              language === 'ar'
+                                ? `السلام عليكم، أود تعديل موعدي المسجل بتاريخ ${selectedDate} لرقم الهاتف ${patientPhone}`
+                                : `Bonjour, je souhaite modifier mon rendez-vous du ${selectedDate} pour le numéro ${patientPhone}`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>{language === 'ar' ? 'تواصل عبر واتساب لتعديل الموعد' : 'Contacter par WhatsApp'}</span>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Too Many Active Bookings Alert */}
+                  {!sameDayAppointment && activeBookingsForPhone.length >= 2 && (
+                    <div className="mt-2.5 p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs flex items-start gap-2.5 animate-in fade-in">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <div className="flex-1 space-y-1">
+                        <p className="font-bold text-rose-950">
+                          {language === 'ar'
+                            ? `⚠️ تنبيه: لديك بالفعل ${activeBookingsForPhone.length} حجوزات نشطة في النظام بهذا الرقم.`
+                            : `⚠️ Attention : Vous avez déjà ${activeBookingsForPhone.length} réservations actives avec ce numéro.`}
+                        </p>
+                        <p className="text-[11px] text-rose-800 leading-relaxed">
+                          {language === 'ar'
+                            ? 'يرجى إتمام مواعيدك الحالية أولاً قبل حجز مواعيد جديدة، أو التواصل مع السكرتارية.'
+                            : 'Veuillez honorer vos rendez-vous actuels avant de faire de nouvelles réservations.'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
