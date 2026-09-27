@@ -121,6 +121,9 @@ export const translations = {
       morningSlots: 'Matinée',
       afternoonSlots: 'Après-midi',
       noSlots: 'Aucun créneau disponible pour ce jour. Veuillez choisir une autre date.',
+      onePerDayError: "Vous ne pouvez pas prendre plus d'un rendez-vous le même jour avec ce numéro de téléphone.",
+      onePerDayDetail: "Un rendez-vous est déjà réservé à cette date. Pour modifier votre créneau ou en cas d'urgence, veuillez contacter directement le cabinet.",
+      maxActiveError: "Vous avez atteint la limite de réservations actives. Veuillez honorer vos rendez-vous en cours ou contacter le cabinet.",
       form: {
         fullName: 'Nom & Prénom',
         fullNamePlaceholder: 'ex: Karim Bouzid',
@@ -599,6 +602,9 @@ export const translations = {
       morningSlots: 'الفترة الصباحية',
       afternoonSlots: 'فترة بعد الظهر',
       noSlots: 'لا توجد مواعيد متاحة في هذا اليوم، يرجى اختيار تاريخ آخر.',
+      onePerDayError: 'لا يمكنك حجز أكثر من موعد واحد في نفس اليوم بنفس رقم الهاتف.',
+      onePerDayDetail: 'يوجد موعد مسجل بالفعل في هذا التاريخ. لتعديل الموعد أو للاستفسار، يرجى التواصل مباشرة مع العيادة.',
+      maxActiveError: 'لديك بالفعل حجوزات نشطة في النظام. يرجى إتمام مواعيدك الحالية قبل حجز مواعيد جديدة أو التواصل مع العيادة.',
       form: {
         fullName: 'الاسم واللقب',
         fullNamePlaceholder: 'مثال: كريم بوزيد',
@@ -1077,6 +1083,9 @@ export const translations = {
       morningSlots: 'Morning Slots',
       afternoonSlots: 'Afternoon Slots',
       noSlots: 'No available slots on this date. Please pick another date.',
+      onePerDayError: 'You cannot take more than one appointment in one day with this phone number.',
+      onePerDayDetail: 'An appointment is already scheduled on this date. To reschedule or for emergencies, please contact the clinic directly.',
+      maxActiveError: 'You have reached the maximum number of active appointments. Please attend your scheduled visits before booking new ones.',
       form: {
         fullName: 'Full Name',
         fullNamePlaceholder: 'e.g. Karim Bouzid',
